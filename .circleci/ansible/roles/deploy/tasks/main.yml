@@ -1,52 +1,100 @@
+# ---
+# - name: "update local apt repo."
+#   become: true
+#   apt:
+#     update_cache: yes
+
+# - name: "upgrade apt packages"
+#   become: true
+#   apt:
+#     upgrade: yes
+
+# - name: "remove stale dependencies"
+#   become: true
+#   apt:
+#     autoremove: yes
+
+# - name: "install dependencies [nodejs and npm]."
+#   become: true
+#   apt:
+#     name: ["nodejs", "npm"]
+#     state: latest
+#     update_cache: yes
+
+# - name: "install pm2"
+#   become: true
+#   npm:
+#     name: pm2
+#     global: yes
+#     production: yes
+#     state: present
+
+# - name: "Create backend app directory" 
+#   file:
+#     path: ~/backend_app_dir
+#     state: directory
+
+# - name: "Copy artifact into Instance" 
+#   become: true
+#   copy:
+#     src: ~/project/artifact.tar.gz
+#     dest: /home/ubuntu/backend_app_dir/artifact.tar.gz
+
+
+# - name: "Start app"
+#   become: true
+#   shell: |
+#     cd /home/ubuntu/backend_app_dir
+#     tar xzvf artifact.tar.gz
+#     npm install
+#     npm run build
+#     pm2 stop all
+#     pm2 start npm -- start
+
 ---
-- name: "update local apt repo."
-  become: true
-  apt:
-    update_cache: yes
-
-- name: "upgrade apt packages"
-  become: true
-  apt:
-    upgrade: yes
-
-- name: "remove stale dependencies"
-  become: true
-  apt:
-    autoremove: yes
-
-- name: "install dependencies [nodejs and npm]."
-  become: true
-  apt:
-    name: ["nodejs", "npm"]
-    state: latest
-    update_cache: yes
-
-- name: "install pm2"
-  become: true
-  npm:
-    name: pm2
-    global: yes
-    production: yes
-    state: present
-
-- name: "Create backend app directory" 
+- name: Creates directory n
   file:
-    path: ~/backend_app_dir
+    path: ~/node_modules
     state: directory
 
-- name: "Copy artifact into Instance" 
-  become: true
-  copy:
-    src: ~/project/artifact.tar.gz
-    dest: /home/ubuntu/backend_app_dir/artifact.tar.gz
+- name: Creates directory d
+  file:
+    path: ~/dist
+    state: directory
 
+- name: Unarchive Backend
+  unarchive:
+    src: dist.tar.gz
+    dest: /home/ubuntu/dist/
 
-- name: "Start app"
-  become: true
-  shell: |
-    cd /home/ubuntu/backend_app_dir
-    tar xzvf artifact.tar.gz
-    npm install
-    npm run build
-    pm2 stop all
-    pm2 start npm -- start
+- name: Copy and unarchive node_modules
+  unarchive:
+    src: node_modules.tar.gz
+    dest: /home/ubuntu/node_modules/
+
+- name: "start app"
+  shell: |       
+      pm2 start npm -f ./main.js -- run start
+  args: 
+    chdir: /home/ubuntu/dist/
+
+- name: "List processes"
+  shell: |      
+      pm2 list
+  register: pm2_result 
+
+- name: "Print in the debug console"
+  debug:
+    var: pm2_result.stdout_lines
+
+  environment:
+    ENVIRONMENT: production
+    TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
+    TYPEORM_MIGRATIONS_DIR: "./migrations"
+    TYPEORM_MIGRATIONS: "./migrations/*.js"
+    TYPEORM_ENTITIES: "./modules/domain/**/*.entity{.ts,.js}"
+    TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST') }}"
+    TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT') }}"
+    TYPEORM_USERNAME: "{{ lookup('env', 'TYPEORM_USERNAME') }}"
+    TYPEORM_PASSWORD: "{{ lookup('env', 'TYPEORM_PASSWORD') }}"
+    TYPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE') }}"
