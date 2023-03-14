@@ -195,7 +195,7 @@ jobs:
       - checkout
       # Add ssh keys with fingerprint
       - add_ssh_keys:
-        fingerprints:
+          fingerprints:
             - "ad:4e:6b:f5:43:6e:c1:87:75:9e:46:28:ac:88:b3:61"
       # attach workspace
       - attach_workspace:
@@ -215,8 +215,7 @@ jobs:
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}      
-      
-
+          
   run-migrations:
     docker:
       # Docker image here that supports NodeJS
