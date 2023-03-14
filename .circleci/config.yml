@@ -403,7 +403,7 @@ jobs:
               cat inventory.txt
               ansible-playbook deploy-backend.yml -i inventory.txt
       - destroy-environment:
-          to: "backend"
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
