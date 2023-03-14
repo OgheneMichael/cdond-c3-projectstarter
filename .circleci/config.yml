@@ -217,7 +217,7 @@ jobs:
   run-migrations:
     docker:
       # Docker image here that supports NodeJS
-      - image: circleci/node:13.8.0
+      - image: circleci/node:14.18.1
     steps:
       # Checkout code from git
       - checkout
@@ -233,8 +233,11 @@ jobs:
           name: Run migrations
           command: |
             cd backend
-            sudo npm install -g npm
-            npm run migrations > migrations_dump.txt
+            npm install
+            npm run build
+            echo "run migration ..."
+            npm run migrations >> migrations_dump.txt
+            echo "migrations dump content ..."
             cat migrations_dump.txt
       - run:
           name: Send migration results to kvdb.io
